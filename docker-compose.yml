@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  api:
+    image: node:20
+    container_name: api
+    command: tail -f /dev/null
+
+  web:
+    image: node:20
+    container_name: web
+    command: tail -f /dev/null
+

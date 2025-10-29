@@ -1,0 +1,6 @@
+# .husky/pre-commit
+
+# Ejecutar lint-staged
+
+npx lint-staged
+
