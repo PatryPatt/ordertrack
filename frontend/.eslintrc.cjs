@@ -3,19 +3,17 @@ module.exports = {
   env: {
     browser: true,
     es2021: true,
-    node: true,
   },
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
     ecmaFeatures: { jsx: true },
   },
-  plugins: ['react', 'react-hooks', 'prettier'],
+  plugins: ['react', 'react-hooks'],
   extends: [
     'eslint:recommended',
     'plugin:react/recommended',
     'plugin:react-hooks/recommended',
-    'plugin:prettier/recommended',
   ],
   settings: {
     react: {
@@ -24,8 +22,6 @@ module.exports = {
   },
   rules: {
     'react/react-in-jsx-scope': 'off', // ✨ React 17+ no necesita importar React
-    'prettier/prettier': 'error',
-    'no-unused-vars': ['warn', { varsIgnorePattern: '^[A-Z_]' }],
   },
 };
 
