@@ -1,5 +1,5 @@
 {
-  "name": "fullstack-project-frontend",
+  "name": "frontend",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,7 +7,8 @@
     "test": "echo \"(no tests yet)\"",
     "dev": "vite --host 0.0.0.0 --port 3000",
     "build": "vite build",
-    "lint": "eslint --config .eslintrc.cjs . --ext .js,.jsx",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "format": "prettier --write .",
     "prepare": "husky",
     "preview": "vite preview"
@@ -22,25 +23,30 @@
     "hooks": {
       "pre-commit": "npx lint-staged"
     }
-  }, 
+  },
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@babel/core": "7.28.5",
+    "@babel/eslint-parser": "7.28.5",
+    "@babel/preset-react": "7.28.5",
     "@commitlint/cli": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0",
-    "@eslint/js": "^9.36.0",
+    "@eslint/js": "9.39.1",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
+    "@typescript-eslint/eslint-plugin": "8.46.3",
+    "@typescript-eslint/parser": "8.46.3",
     "@vitejs/plugin-react": "^5.1.0",
     "eslint": "9.38.0",
-    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-prettier": "9.1.2",
     "eslint-plugin-prettier": "5.5.4",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.0.1",
     "eslint-plugin-react-refresh": "0.4.24",
-    "globals": "^13.x.x",
+    "globals": "13.24.0",
     "husky": "^9.0.10",
     "lint-staged": "^15.2.0",
     "prettier": "3.6.2",
