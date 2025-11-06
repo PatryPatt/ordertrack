@@ -1,0 +1,32 @@
+# Node dependencies (no se copian dentro del contenedor)
+node_modules
+
+# Archivos generados por Nest (build local)
+dist
+
+# Logs y archivos temporales
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+*.log
+
+# Configuración del sistema
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Archivos del entorno local
+.idea
+.vscode
+*.swp
+
+# Tests locales o coverage
+coverage
+test-results
+
+# Git y docs
+.git
+.gitignore
+README.md

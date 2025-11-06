@@ -8,7 +8,11 @@ async function bootstrap() {
 
   // ✅ Habilitar validaciones globales con class-validator
   app.useGlobalPipes(
-    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
+    new ValidationPipe({
+      whitelist: true, // elimina propiedades no definidas en el DTO
+      forbidNonWhitelisted: true, // lanza error si envías propiedades extra
+      transform: true, // convierte tipos automáticamente
+    }),
   );
 
   // ✅ Configurar Swagger
@@ -20,10 +24,13 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  // Aqui cambiamos la ruta
+  SwaggerModule.setup('api/docs', app, document, {
+    customSiteTitle: 'OrderTrack API Docs',
+  });
 
-  await app.listen(3001);
+  await app.listen(4000);
   console.log(`🚀 App running on http://localhost:3001`);
-  console.log(`📘 Swagger Docs on http://localhost:3001/api`);
+  console.log(`📘 Swagger Docs on http://localhost:3001/api/docs`);
 }
 void bootstrap();
