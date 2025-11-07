@@ -1,21 +1,25 @@
-# 1. Imagen base Node
+# Imagen base
 FROM node:20
 
-# 2. Directorio de trabajo
+# Directorio de trabajo
 WORKDIR /usr/src/app
 
-# 3. Copiar package.json y package-lock.json
+# Evitar problemas de permisos con NPM
+RUN mkdir -p /usr/src/app/.npm-cache && npm config set cache /usr/src/app/.npm-cache
+
+# Copiar dependencias
 COPY package*.json ./
 
-# 4. Instalar dependencias
+# Instalar dependencias
 RUN npm install
 
-# 5. Copiar todo el código fuente
+# Copiar el resto del proyecto
 COPY . .
 
-# 6. Exponer puerto
-EXPOSE 3000
+# Exponer el puerto del backend (3001)
+EXPOSE 4000
 
-# 7. Comando para desarrollo
-CMD ["npm", "run", "dev"]
+# Comando de desarrollo NestJS
+CMD ["npm", "run", "start:dev"]
+
 

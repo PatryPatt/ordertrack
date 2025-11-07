@@ -22,8 +22,14 @@ Proyecto de ejemplo con los siguientes contenedores:
 | **Mongo Express**   | Interfaz gráfica para MongoDB            | http://localhost:8081            | 8081    | root                  | root123     |
 | **PostgreSQL**      | Base de datos relacional                 | localhost:5432                   | 5432    | user                  | password    |
 | **MongoDB**         | Base de datos NoSQL                      | localhost:27017                  | 27017   | root                  | root123     |
+| **Swagger**         |Documentación Swagger                     | http://localhost:4000/api/docs   | 4000    |                       |             |
 
 ---
+
+- Vite en el puerto 3000
+- NestJS (API) en el 4000
+- Servicios de bases de datos y administración funcionando correctamente
+- Swagger activo y accesible
 
 ## Levantar el entorno local Docker
 
@@ -156,9 +162,141 @@ Cada servicio (api y web) se construye por separado con su propio npm install.
 ## Frontend (React/Vite)
 Interfaz web del proyecto
 
-## Backend (API Node/Express)
-Interfaz web del proyecto
-    
+## API — Backend (NestJS)
+Este backend está desarrollado con **[NestJS 11](https://nestjs.com/)** y forma parte del proyecto **OrderTrack**.  
+Actualmente implementa la estructura base del framework, validaciones globales, documentación con Swagger y pruebas unitarias funcionales.
+
+---
+
+## Características principales
+
+- **Framework:** NestJS (Node.js + TypeScript)  
+- **Arquitectura modular:** App, Users y Health  
+- **Validaciones:** `class-validator` + `ValidationPipe` global  
+- **Configuración:** Variables de entorno mediante `@nestjs/config`  
+- **Documentación API:** Swagger disponible en `/api/docs`  
+- **Pruebas unitarias:** Configuradas con Jest  
+- **Contenedores:** Docker Compose con PostgreSQL, MongoDB, pgAdmin y Mongo Express  
+
+---
+
+## Estructura del proyecto
+src/
+├── app.module.ts # Módulo raíz
+├── app.controller.ts # Controlador principal (Hello World)
+├── app.service.ts # Servicio principal
+├── main.ts # Punto de entrada, configuración global y Swagger
+├── users/ # Módulo de usuarios (DTOs, controlador, servicio)
+└── health/ # Módulo de health check
+
+## Endpoints principales
+
+| Ruta | Método | Descripción |
+|------|---------|-------------|
+| `/` | GET | Endpoint base (“Hello World”) |
+| `/api/health` | GET | Verifica el estado del backend |
+| `/api/docs` | — | Documentación Swagger de la API |
+| `/users` | CRUD | Endpoints del módulo de usuarios |
+
+---
+
+## Estado actual
+
+-  Estructura NestJS inicial completada  
+-  Validaciones globales con `class-validator`  
+-  Swagger configurado correctamente  
+-  Tests unitarios en verde  
+-  Entorno Docker operativo  
+
+---
+
+### Instrucciones para levantar backend
+1. Crear un nuevo proyecto NestJS desde cero, generando toda la estructura inicial y configuración necesaria.
+**nest new backend**
+
+| Acción                                                  | Descripción                                               |
+| ------------------------------------------------------- | --------------------------------------------------------- |
+| `nest new backend`                                      | Crea una nueva aplicación NestJS en la carpeta `backend/` |
+| Configura TypeScript, ESLint y Prettier automáticamente |                                                           |
+| Te deja listo para empezar a desarrollar tu API modular |                                                           |
+
+## Scripts disponibles
+
+| Comando                     | Descripción |
+|-----------------------------|-------------|
+| `npm run start:dev`         | Inicia el servidor en modo desarrollo (reinicia al guardar cambios) |
+| `npm run lint`              | Ejecuta ESLint para comprobar el estilo de código |
+| `npm run test`              | Ejecuta las pruebas unitarias con Jest |
+| `docker compose up --build` | Levanta el entorno completo (API, bases de datos y GUI) |
+| `npm run start`             | Inicia el servidor |
+| `npm run build`             | Compila TypeScript a JavaScript |
+
+### Crear módulo users con CRUD en memoria.
+
+1. Ejecutamos → **nest g resource users**
+? What transport layer do you use? (Use arrow keys)
+❯ REST API
+  GraphQL (code first)
+  GraphQL (schema first)
+  Microservice (non-HTTP)
+  WebSockets
+? Would you like to generate CRUD entry points? (Y/n) Y
+
+2. Se generará la siguiente estructura:
+esto registrará automáticamente UsersModule dentro de AppModule.
+
+src/users/
+ ├── dto/
+ │   ├── create-user.dto.ts
+ │   └── update-user.dto.ts
+ ├── entities/
+ │   └── user.entity.ts
+ ├── users.controller.ts
+ ├── users.module.ts
+ └── users.service.ts
+
+3. Iniciar el servidor
+npm run start:dev
+
+4. Probar endpoints con Postman o Thunder Client:
+
+| Método   | Endpoint   | Descripción   | Body ejemplo                                              |
+| -------- | ---------- | ------------- | --------------------------------------------------------- |
+| `POST`   | `/users`   | Crear usuario | `{ "name": "Patricia", "email": "patricia@example.com" }` |
+| `GET`    | `/users`   | Listar todos  | —                                                         |
+| `GET`    | `/users/1` | Obtener uno   | —                                                         |
+| `PATCH`  | `/users/1` | Actualizar    | `{ "name": "Patricia Updated" }`                          |
+| `DELETE` | `/users/1` | Eliminar      | —                                                         |
+
+Con esto tenemos un CRUD completo funcionando en memoria, sin base de datos, ideal para prototipos o tests iniciales.
+Cada vez que se reinicie el servidor, los datos se perderán (ya que están en memoria).
+
+### Configurar SwaggerModule y DTOs con class-validator.
+
+1. Instalar y configurar Swagger para tener la documentación interactiva (/api).
+En backend/, ejecutar:
+npm install @nestjs/swagger swagger-ui-express class-validator class-transformer
+
+Estas librerías sirven para:
+- @nestjs/swagger → genera la documentación OpenAPI.
+- swagger-ui-express → monta la interfaz visual de Swagger.
+- class-validator + class-transformer → validan y transforman datos en los DTOs.
+
+2. Crear DTOs usando class-validator y class-transformer para validar los datos de entrada.
+3. Integrarlo con el módulo users.
+
+Una vez que esté levantado el servidor (npm run start:dev), deberíamos ver:
+- API corriendo: http://localhost:4000
+- Documentación Swagger: http://localhost:4000/api/docs Swagger ya permite probar los endpoints directamente en el navegador.
+Si hacemos un POST /users con datos inválidos, class-validator los bloqueará automáticamente.
+
+Verificar que NestJS esta levantado:
+npm run start:dev
+
+Por consola deberiamos ver:
+🚀 App running on http://localhost:4000
+📘 Swagger Docs on http://localhost:4000/api/docs
+
 ## PostgreSQL
 Base de datos relacional
 
