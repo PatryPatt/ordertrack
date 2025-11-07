@@ -6,19 +6,19 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // ✅ Habilitar validaciones globales con class-validator
+  // Habilitar validaciones globales con class-validator
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, // elimina propiedades no definidas en el DTO
-      forbidNonWhitelisted: true, // lanza error si envías propiedades extra
-      transform: true, // convierte tipos automáticamente
+      forbidNonWhitelisted: true, // lanza error si llegan propiedades no permitidas
+      transform: true, // convierte tipos automáticamente segun DTO
     }),
   );
 
-  // ✅ Configurar Swagger
+  // Configurar Swagger
   const config = new DocumentBuilder()
     .setTitle('OrderTrack API')
-    .setDescription('API de gestión de usuarios y pedidos')
+    .setDescription('Documentación de la API con NestJS + Swagger')
     .setVersion('1.0')
     .addTag('users')
     .build();
@@ -29,8 +29,11 @@ async function bootstrap() {
     customSiteTitle: 'OrderTrack API Docs',
   });
 
-  await app.listen(4000);
-  console.log(`🚀 App running on http://localhost:3001`);
-  console.log(`📘 Swagger Docs on http://localhost:3001/api/docs`);
+  // Puerto desde variable de entorno
+  const port = process.env.PORT || 4000;
+  await app.listen(port);
+
+  console.log(`🚀 App running on http://localhost:${port}`);
+  console.log(`📘 Swagger Docs on http://localhost:${port}/api/docs`);
 }
 void bootstrap();
