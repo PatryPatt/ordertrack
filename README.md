@@ -231,6 +231,98 @@ src/
 | `npm run start`             | Inicia el servidor |
 | `npm run build`             | Compila TypeScript a JavaScript |
 
+## Módulo test
+Para ejecutarlos desde dentro de Docker
+  docker compose exec api npm run test
+
+Desde fuera del contenedor:
+  npm run test
+
+RESULTADO ESPERADO
+
+ PASS  src/app.controller.spec.ts
+ PASS  src/health/health.controller.spec.ts
+ PASS  src/health/health.service.spec.ts
+ PASS  src/users/users.service.spec.ts
+ PASS  src/users/users.controller.spec.ts
+
+Test Suites: 5 passed, 5 total
+Tests:       10 passed, 10 total
+Snapshots:   0 total
+Time:        1.071 s
+
+| Funcionalidad              | Test                                                 | Resultado esperado                                            |
+| -------------------------- | ---------------------------------------------------- | ------------------------------------------------------------- |
+| Crear usuario              | `should create a user`                             | Devuelve un objeto con `id`, `username`, `email`, `password`. |
+| Buscar usuario existente   | `should find a user by ID`                         | Devuelve el mismo objeto creado.                              |
+| Buscar usuario inexistente | `should throw NotFoundException if user not found` | Lanza una excepción.                                          |
+| Actualizar usuario         | `should update a user`                             | Cambia correctamente el `username`.                           |
+| Eliminar usuario           | `should remove a user`                             | Después de borrar, lanza excepción al buscar.                 |
+
+Se pueden ejecutar test con cobertura, para ver que partes de código están cubiertas.
+Ejecutamos:
+  docker compose exec api npm run test:cov
+
+-----------------------|---------|----------|---------|---------|-------------------
+File                   | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-----------------------|---------|----------|---------|---------|-------------------
+All files              |    61.6 |    68.18 |   57.89 |   59.34 |                   
+ src                   |   36.11 |       50 |      75 |      30 |                   
+  app.controller.ts    |     100 |       75 |     100 |     100 | 6                 
+  app.module.ts        |       0 |      100 |     100 |       0 | 1-19              
+  app.service.ts       |     100 |      100 |     100 |     100 |                   
+  main.ts              |       0 |        0 |       0 |       0 | 1-39              
+ src/health            |   56.25 |      100 |       0 |      50 |                   
+  health.controller.ts |   83.33 |      100 |       0 |      75 | 7                 
+  health.module.ts     |       0 |      100 |     100 |       0 | 1-9               
+  health.service.ts    |     100 |      100 |     100 |     100 |                   
+ src/users             |      75 |       75 |   57.14 |   74.35 |                   
+  users.controller.ts  |   73.68 |       75 |   16.66 |   70.58 | 23,29,35,41,47    
+  users.module.ts      |       0 |      100 |     100 |       0 | 1-9               
+  users.service.ts     |   95.65 |       75 |    87.5 |   94.44 | 21                
+ src/users/dto         |     100 |      100 |     100 |     100 |                   
+  create-user.dto.ts   |     100 |      100 |     100 |     100 |                   
+  update-user.dto.ts   |     100 |      100 |     100 |     100 |                   
+ src/users/entities    |       0 |      100 |     100 |       0 |                   
+  user.entity.ts       |       0 |      100 |     100 |       0 | 1                 
+-----------------------|---------|----------|---------|---------|-------------------
+
+## script test:watch
+Tiene que estar declarado en el package.json en el bloque scripts:
+Usamos --watchAll porque no tenemos un repositorio Git/Hg dentro del contenedor.
+
+"scripts": {
+  "test:watch": "jest --watchAll"
+}
+
+Lo que hace, es que le dice a Jest que observe todos los archivos y ejecute las pruebas cada vez que haya un cambio, sin depender de Git.
+
+Para ejecutarlo:
+  docker compose exec api npm run test:watch
+
+Cada vez que se edite cualquier archivo .ts dentro de src/, las pruebas se ejecutarán automáticamente dentro del contenedor.
+Veremos que Jest se queda escuchando los cambios sin errores:
+
+ PASS  src/app.controller.spec.ts
+ PASS  src/health/health.service.spec.ts
+ PASS  src/users/users.controller.spec.ts
+ PASS  src/users/users.service.spec.ts
+ PASS  src/health/health.controller.spec.ts
+
+Test Suites: 5 passed, 5 total
+Tests:       10 passed, 10 total
+Snapshots:   0 total
+Time:        0.948 s, estimated 1 s
+Ran all test suites.
+
+Watch Usage
+ › Press f to run only failed tests.
+ › Press o to only run tests related to changed files.
+ › Press p to filter by a filename regex pattern.
+ › Press t to filter by a test name regex pattern.
+ › Press q to quit watch mode.
+ › Press Enter to trigger a test run.
+
 ## Módulo Users
 El módulo Users implementa un CRUD completo en memoria para gestionar usuarios.
 Sigue el flujo típico de NestJS: Controller → Service → DTOs → Entity, y expone endpoints REST documentados con Swagger.
