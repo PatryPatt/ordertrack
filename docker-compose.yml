@@ -17,12 +17,14 @@ services:
       - POSTGRES_HOST=${POSTGRES_HOST}
       - MONGO_HOST=${MONGO_HOST}
       # UID/GID del usuario local, para evitar archivos root
-      - USER_ID=${USER_ID}
-      - GROUP_ID=${GROUP_ID}
+      # - USER_ID=${USER_ID}
+      # - GROUP_ID=${GROUP_ID}
     # Ejecuta el contenedor con el mismo UID/GID del usuario local
-    user: "${USER_ID}:${GROUP_ID}"
+    # ⚠️ Quito temporalmente el user UID/GID para evitar errores de permisos
+    # user: "${USER_ID}:${GROUP_ID}"
     # Sincroniza el código del host con el contenedor
     volumes:
+      # Monta el código fuente, pero excluye dist y node_modules
       - ./backend:/usr/src/app
       - /usr/src/app/node_modules
     # Comando de desarrollo (watch mode)

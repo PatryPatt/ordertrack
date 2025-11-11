@@ -231,6 +231,10 @@ src/
 | `npm run start`             | Inicia el servidor |
 | `npm run build`             | Compila TypeScript a JavaScript |
 
+## Módulo Users
+El módulo Users implementa un CRUD completo en memoria para gestionar usuarios.
+Sigue el flujo típico de NestJS: Controller → Service → DTOs → Entity, y expone endpoints REST documentados con Swagger.
+
 ### Crear módulo users con CRUD en memoria.
 
 1. Ejecutamos → **nest g resource users**
@@ -258,18 +262,55 @@ src/users/
 3. Iniciar el servidor
 npm run start:dev
 
-4. Probar endpoints con Postman o Thunder Client:
+4. Flujo de funcionamiento
+- Controller (users.controller.ts) → Define los endpoints REST.
+- Service (users.service.ts) → Contiene la lógica de negocio y manipula un array en memoria.
+- DTOs (create-user.dto.ts, update-user.dto.ts) → Validan los datos de entrada usando class-validator.
+- Entity (user.entity.ts) → Define la estructura básica del usuario.
 
-| Método   | Endpoint   | Descripción   | Body ejemplo                                              |
-| -------- | ---------- | ------------- | --------------------------------------------------------- |
-| `POST`   | `/users`   | Crear usuario | `{ "name": "Patricia", "email": "patricia@example.com" }` |
-| `GET`    | `/users`   | Listar todos  | —                                                         |
-| `GET`    | `/users/1` | Obtener uno   | —                                                         |
-| `PATCH`  | `/users/1` | Actualizar    | `{ "name": "Patricia Updated" }`                          |
-| `DELETE` | `/users/1` | Eliminar      | —                                                         |
+5. Probar endpoints con Postman o Thunder Client:
+
+| Método   | Endpoint     | Descripción                  | Body ejemplo                                              |
+| -------- | ------------ | ---------------------------- | --------------------------------------------------------- |
+| `POST`   | `/users`     | Crea un nuevo usuario        | `{ "name": "Patricia", "email": "patricia@example.com", "password": "123456" }` |
+| `GET`    | `/users`     | Devuelve todos los usuarios  | —                                                         |
+| `GET`    | `/users/:id` | Devuelve un usuario por ID   | —                                                         |
+| `PATCH`  | `/users/:id` | Actualiza un usuario         | `{ "name": "Patricia Updated" }`                          |
+| `DELETE` | `/users/:id` | Elimina un usuario por ID    | —                                                         |
 
 Con esto tenemos un CRUD completo funcionando en memoria, sin base de datos, ideal para prototipos o tests iniciales.
 Cada vez que se reinicie el servidor, los datos se perderán (ya que están en memoria).
+
+### Validación de endpoints con Thunder Client
+
+Sigue estos pasos para verificar el funcionamiento del módulo Users en tu API NestJS.
+
+🔹 1. Iniciar el backend
+    Asegúrate de tener el servidor corriendo:
+    npm run start:dev
+    Por defecto se ejecuta en http://localhost:4000
+
+🔹 2. Abrir Thunder Client
+
+En Visual Studio Code:
+    Abre la pestaña Thunder Client (icono de rayo ⚡).
+    Crea una colección nueva llamada Users API (opcional).
+
+🔹 3. Endpoints disponibles
+| Método     | Ruta         | Descripción                    | Ejemplo de cuerpo (JSON)                                                            |
+| :--------- | :----------- | :----------------------------- | :---------------------------------------------------------------------------------- |
+| **GET**    | `/users`     | Devuelve todos los usuarios    | —                                                                                   |
+| **GET**    | `/users/:id` | Devuelve un usuario por ID     | —                                                                                   |
+| **POST**   | `/users`     | Crea un nuevo usuario          | `{ "username": "patricia", "email": "patricia@example.com", "password": "123456" }` |
+| **PATCH**  | `/users/:id` | Actualiza un usuario existente | `{ "email": "nuevo@email.com" }`                                                    |
+| **DELETE** | `/users/:id` | Elimina un usuario por ID      | —                                                                                   |
+
+🔹 4. Ejemplos de prueba
+  GET /users
+    URL: http://localhost:4000/users
+    Respuesta esperada:
+    []
+
 
 ### Configurar SwaggerModule y DTOs con class-validator.
 
