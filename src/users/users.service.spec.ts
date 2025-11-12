@@ -1,43 +1,70 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './entities/user.entity';
+import { NotFoundException } from '@nestjs/common';
 
-@Injectable()
-export class UsersService {
-  private users: User[] = [];
-  private idCounter = 1;
+describe('UsersService', () => {
+  let service: UsersService;
 
-  create(createUserDto: CreateUserDto): User {
-    const newUser: User = {
-      id: this.idCounter++,
-      ...createUserDto,
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [UsersService],
+    }).compile();
+
+    service = module.get<UsersService>(UsersService);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  it('should create a user', () => {
+    const dto: CreateUserDto = {
+      username: 'patricia',
+      email: 'patricia@example.com',
+      password: '123456',
     };
-    this.users.push(newUser);
-    return newUser;
-  }
 
-  findAll(): User[] {
-    return this.users;
-  }
+    const user = service.create(dto);
+    expect(user).toMatchObject(dto);
+    expect(user.id).toBeDefined();
+  });
 
-  findOne(id: number): User {
-    const user = this.users.find((u) => u.id === id);
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
-    return user;
-  }
+  it('should find a user by ID', () => {
+    const user = service.create({
+      username: 'user2',
+      email: 'user2@example.com',
+      password: 'abcdef',
+    });
 
-  update(id: number, updateUserDto: UpdateUserDto): User {
-    const user = this.findOne(id);
-    const updatedUser = { ...user, ...updateUserDto };
-    this.users = this.users.map((u) => (u.id === id ? updatedUser : u));
-    return updatedUser;
-  }
+    const found = service.findOne(user.id);
+    expect(found).toEqual(user);
+  });
 
-  remove(id: number): void {
-    const user = this.findOne(id);
-    this.users = this.users.filter((u) => u.id !== user.id);
-  }
-}
+  it('should throw NotFoundException if user not found', () => {
+    expect(() => service.findOne(999)).toThrow(NotFoundException);
+  });
+
+  it('should update a user', () => {
+    const user = service.create({
+      username: 'oldname',
+      email: 'old@example.com',
+      password: '123456',
+    });
+
+    const updated = service.update(user.id, { username: 'newname' });
+    expect(updated.username).toBe('newname');
+    expect(service.findOne(user.id).username).toBe('newname');
+  });
+
+  it('should remove a user', () => {
+    const user = service.create({
+      username: 'todelete',
+      email: 'delete@example.com',
+      password: '123456',
+    });
+
+    service.remove(user.id);
+    expect(() => service.findOne(user.id)).toThrow(NotFoundException);
+  });
+});
