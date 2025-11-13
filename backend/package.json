@@ -6,7 +6,6 @@
   "type": "module",
   "scripts": {
     "test": "echo \"(no tests yet)\"",
-    "prepare": "husky",
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "lint": "eslint . --ext .js,.mjs",
