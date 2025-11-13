@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+coverage
+
+# Archivos de configuración que no deben ser formateados
+eslint.config.js
+vite.config.js
+commitlint.config.js
