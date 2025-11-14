@@ -31,7 +31,8 @@ async function bootstrap() {
 
   // Puerto desde variable de entorno
   const port = process.env.PORT || 4000;
-  await app.listen(port);
+  const host = process.env.HOST || '0.0.0.0';
+  await app.listen(port, host);
 
   console.log(`🚀 App running on http://localhost:${port}`);
   console.log(`📘 Swagger Docs on http://localhost:${port}/api/docs`);
