@@ -3,10 +3,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UsersModule } from './users/users.module';
 import { HealthModule } from './health/health.module';
 import { DataSource } from 'typeorm';
+import { UsersModule } from './users/users.module';
+import { OrdersModule } from './orders/orders.module';
 import { User } from './users/entities/user.entity';
+import { Order } from './orders/entities/order.entity';
 
 @Module({
   imports: [
