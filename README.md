@@ -70,6 +70,9 @@ docker compose down -v
 
 ---
 
+## Instalar TypeORM
+npm install typeorm @nestjs/typeorm reflect-metadata
+
 ## Convenciones de gitHub y ramas
 
 ### Ramas principales
@@ -347,6 +350,8 @@ src/users/
  │   └── update-user.dto.ts
  ├── entities/
  │   └── user.entity.ts
+ ├── repositories/
+ │   └── user.repository.ts //Repositorio personalizado
  ├── users.controller.ts
  ├── users.module.ts
  └── users.service.ts
@@ -360,11 +365,18 @@ npm run start:dev
 - DTOs (create-user.dto.ts, update-user.dto.ts) → Validan los datos de entrada usando class-validator.
 - Entity (user.entity.ts) → Define la estructura básica del usuario.
 
-5. Probar endpoints con Postman o Thunder Client:
+5. UsersService acceso PostgreSQL
+- create() → usa usersRepository.create() + save()
+- findAll() → usa .find()
+- findOne() → usa .findOneBy()
+- update() → usa .save()
+- remove() → usa .remove()
+
+6. Probar endpoints con Postman o Thunder Client:
 
 | Método   | Endpoint     | Descripción                  | Body ejemplo                                              |
 | -------- | ------------ | ---------------------------- | --------------------------------------------------------- |
-| `POST`   | `/users`     | Crea un nuevo usuario        | `{ "name": "Patricia", "email": "patricia@example.com", "password": "123456" }` |
+| `POST`   | `/users`     | Crea un nuevo usuario        | `{ "name": "Patricia", "email": "patricia@example.com" }` |
 | `GET`    | `/users`     | Devuelve todos los usuarios  | —                                                         |
 | `GET`    | `/users/:id` | Devuelve un usuario por ID   | —                                                         |
 | `PATCH`  | `/users/:id` | Actualiza un usuario         | `{ "name": "Patricia Updated" }`                          |
@@ -389,20 +401,137 @@ En Visual Studio Code:
     Crea una colección nueva llamada Users API (opcional).
 
 🔹 3. Endpoints disponibles
-| Método     | Ruta         | Descripción                    | Ejemplo de cuerpo (JSON)                                                            |
-| :--------- | :----------- | :----------------------------- | :---------------------------------------------------------------------------------- |
-| **GET**    | `/users`     | Devuelve todos los usuarios    | —                                                                                   |
-| **GET**    | `/users/:id` | Devuelve un usuario por ID     | —                                                                                   |
-| **POST**   | `/users`     | Crea un nuevo usuario          | `{ "username": "patricia", "email": "patricia@example.com", "password": "123456" }` |
-| **PATCH**  | `/users/:id` | Actualiza un usuario existente | `{ "email": "nuevo@email.com" }`                                                    |
-| **DELETE** | `/users/:id` | Elimina un usuario por ID      | —                                                                                   |
+| Método     | Ruta         | Descripción                    | Ejemplo de cuerpo (JSON)         |
+:------------------------------------------------------------|--------------------------------- |
+| **GET**    | `/users`     | Devuelve todos los usuarios    |                                  |
+| **GET**    | `/users/:id` | Devuelve un usuario por ID     |                                  |
+| **POST**   | `/users`     | Crea un nuevo usuario          | `{ "username": "patricia", "email": "patricia@example.com" }` |
+| **PATCH**  | `/users/:id` | Actualiza un usuario existente | `{ "email": "nuevo@email.com" }` |
+| **DELETE** | `/users/:id` | Elimina un usuario por ID      | —                                |
 
 🔹 4. Ejemplos de prueba
   GET /users
     URL: http://localhost:4000/users
     Respuesta esperada:
-    []
+    [
+	    {
+	      "id": 1,
+	      "name": "Patricia",
+	      "email": "patricia@example.com"
+	    },
+	    {
+	      "id": 2,
+	      "name": "Chloe",
+	      "email": "chloe@example.com"
+	    }
+	  ]
 
+## Módulo Orders
+El módulo Orders implementa un CRUD completo en memoria para gestionar los pedidos.
+Sigue el flujo típico de NestJS: Controller → Service → DTOs → Entity, y expone endpoints REST documentados con Swagger.
+
+### Crear módulo users con CRUD en memoria.
+1. Ejecutamos → **nest g resource users**
+? What transport layer do you use? (Use arrow keys)
+❯ REST API
+  GraphQL (code first)
+  GraphQL (schema first)
+  Microservice (non-HTTP)
+  WebSockets
+? Would you like to generate CRUD entry points? (Y/n) Y
+
+2. Se generará la siguiente estructura:
+esto registrará automáticamente OrdersModule dentro de AppModule.
+
+src/orders/
+ ├── dto/
+ │   ├── create-order.dto.ts
+ │   └── update-order.dto.ts
+ ├── entities/
+ │   └── order.entity.ts
+ ├── repositories/
+ │   └── order.repository.ts  // Repositorio personalizado
+ ├── orders.controller.ts
+ ├── orders.module.ts
+ └── orders.service.ts
+
+3. Iniciar el servidor
+npm run start:dev
+
+4. Flujo de funcionamiento
+- Controller (orders.controller.ts) → Define los endpoints REST.
+- Service (orders.service.ts) → Contiene la lógica de negocio y manipula un array en memoria.
+- DTOs (create-order.dto.ts, update-order.dto.ts) → Validan los datos de entrada usando class-validator.
+- Entity (order.entity.ts) → Define la estructura básica de los pedidos.
+
+5. OrdersService acceso PostgreSQL
+- create() → valida user y crea orden real
+- findAll() → .find({ relations: ['user'] })
+- findOne() → .findOne({ relations: ['user'] })
+- update() → modifica el objeto y hace .save()
+- remove() → .remove()
+
+6. Probar endpoints con Postman o Thunder Client:
+
+| Método   | Endpoint      | Descripción                  | Body ejemplo                                             |
+| -------- | ------------- | ---------------------------- | -------------------------------------------------------- |
+| `POST`   | `/orders`     | Crea un nuevo usuario        | `{ "description": "Pedido de prueba", "userId": 1 }`     |
+| `GET`    | `/orders`     | Devuelve todos los usuarios  | —                                                        |
+| `GET`    | `/orders/:id` | Devuelve un usuario por ID   | —                                                        |
+| `PATCH`  | `/orders/:id` | Actualiza un usuario         | —                                                        |
+| `DELETE` | `/orders/:id` | Elimina un usuario por ID    | —                                                        |
+
+Con esto tenemos un CRUD completo funcionando en memoria, sin base de datos, ideal para prototipos o tests iniciales.
+Cada vez que se reinicie el servidor, los datos se perderán (ya que están en memoria).
+
+### Validación de endpoints con Thunder Client
+
+Sigue estos pasos para verificar el funcionamiento del módulo Orders en tu API NestJS.
+
+🔹 1. Iniciar el backend
+    Asegúrate de tener el servidor corriendo:
+    npm run start:dev
+    Por defecto se ejecuta en http://localhost:4000
+
+🔹 2. Abrir Thunder Client
+
+En Visual Studio Code:
+    Abre la pestaña Thunder Client (icono de rayo ⚡).
+    Crea una colección nueva llamada Orders API (opcional).
+
+🔹 3. Endpoints disponibles
+| Método     | Ruta         | Descripción                     | Ejemplo de cuerpo (JSON)         |
+:-------------------------------------------------------------|--------------------------------- |
+| **GET**    | `/orders`     | Devuelve todos los usuarios    |                                  |
+| **GET**    | `/orders/:id` | Devuelve un usuario por ID     |                                  |
+| **POST**   | `/orders`     | Crea un nuevo usuario          | `{ "descripcion": "pedido de prueba", "userId": 1 }` |
+| **PATCH**  | `/orders/:id` | Actualiza un usuario existente | `{ "descripcion": "pedido prueba 1" }` |
+| **DELETE** | `/orders/:id` | Elimina un usuario por ID      | —                                |
+
+🔹 4. Ejemplos de prueba
+  GET /users
+    URL: http://localhost:4000/orders
+    Respuesta esperada:
+    [
+	  {
+	    "id": 1,
+	    "description": "Pedido de prueba",
+	    "user": {
+	      "id": 1,
+	      "name": "Patricia",
+	      "email": "patricia@example.com"
+	    }
+	  },
+	  {
+	    "id": 2,
+	    "description": "Pedido de comida fresca",
+	    "user": {
+	      "id": 2,
+	      "name": "Chloe",
+	      "email": "chloe@example.com"
+	    }
+	  }
+	  ]
 
 ### Configurar SwaggerModule y DTOs con class-validator.
 

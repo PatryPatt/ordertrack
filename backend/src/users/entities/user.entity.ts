@@ -12,6 +12,6 @@ export class User {
   @Column({ unique: true })
   email!: string;
 
-  @OneToMany(() => Order, (order) => order.user)
+  @OneToMany(() => Order, order => order.user)
   orders!: Order[];
 }

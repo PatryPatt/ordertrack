@@ -1,7 +1,17 @@
-import { EntityRepository, Repository } from 'typeorm';
-import { Order } from '../entities/order.entity';
 import { Injectable } from '@nestjs/common';
+import { DataSource, Repository } from 'typeorm';
+import { Order } from '../entities/order.entity';
 
 @Injectable()
-@EntityRepository(Order)
-export class OrderRepository extends Repository<Order> {}
+export class OrderRepository extends Repository<Order> {
+  constructor(private dataSource: DataSource) {
+    super(Order, dataSource.createEntityManager());
+  }
+
+  async findByUserId(userId: number) {
+    return this.find({
+      where: { user: { id: userId } },
+      relations: ['user'],
+    });
+  }
+}

@@ -5,15 +5,15 @@ import { Order } from './entities/order.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { OrderRepository } from './repositories/order.repository';
 
 @Injectable()
 export class OrdersService {
   constructor(
-    @InjectRepository(Order)
-    private readonly ordersRepository: Repository<Order>,
-    @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
-  ) {}
+  private readonly ordersRepository: OrderRepository,
+  @InjectRepository(User)
+  private readonly usersRepository: Repository<User>,
+) {}
 
   async create(createOrderDto: CreateOrderDto): Promise<Order> {
     const user = await this.usersRepository.findOneBy({
