@@ -50,7 +50,7 @@ services:
     image: dpage/pgadmin4
     container_name: pgadmin
     env_file:
-      - .env
+      - .env.docker
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}

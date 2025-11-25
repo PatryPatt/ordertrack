@@ -1,30 +1,40 @@
-import { AppDataSource } from '../data-source';
+import { SeedDataSource } from '../../config/data-source.seed';
 import { User } from '../users/entities/user.entity';
+import { Order } from '../orders/entities/order.entity';
 
-async function seed() {
-  await AppDataSource.initialize();
-  console.log('Conectado a la base de datos');
+async function runSeed() {
+  try {
+    console.log('Connecting to database...');
+    await SeedDataSource.initialize();
+    console.log('✅ Connected to database.');
 
-  const userRepo = AppDataSource.getRepository(User);
+     // Limpiar Orders primero
+    console.log('Deleting existing orders...');
+    const orderRepo = SeedDataSource.getRepository(Order);
+    const deletedOrders = await orderRepo.createQueryBuilder().delete().execute();
+    console.log(`Deleted ${deletedOrders.affected || 0} orders.`);
 
-  const existing = await userRepo.count();
-  if (existing > 0) {
-    console.log('Ya existen usuarios, no se insertan datos.');
-    return;
+    // Limpiar Users después
+    console.log('Deleting existing users...');
+    const userRepo = SeedDataSource.getRepository(User);
+    const deletedUsers = await userRepo.createQueryBuilder().delete().execute();
+    console.log(`Deleted ${deletedUsers.affected || 0} users.`);
+
+    // Crear usuario inicial
+    const user = userRepo.create({
+      name: 'Admin',
+      email: 'admin@demo.com',
+    });
+    await userRepo.save(user);
+    console.log('✅ User created:', user);
+
+    await SeedDataSource.destroy();
+    console.log('✅ Seed completed successfully.');
+  } catch (error) {
+    console.error('❌ Error running seed:', error);
+    await SeedDataSource.destroy();
+    process.exit(1);
   }
-
-  const users = userRepo.create([
-    { name: 'Admin', email: 'admin@example.com' },
-    { name: 'User', email: 'user@example.com' },
-  ]);
-
-  await userRepo.save(users);
-
-  console.log('Datos iniciales insertados');
-  await AppDataSource.destroy();
 }
 
-seed().catch((err) => {
-  console.error('Error ejecutando seed:', err);
-  process.exit(1);
-});
+runSeed();
