@@ -1,9 +1,13 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
+import { validateSeedEnv } from './validate-seed-env';
 
 // Cargar archivo .env.seed DE backend
 dotenv.config({ path: __dirname + '/../.env.seed' });
+
+// Validar variables con Joi
+validateSeedEnv(process.env);
 
 import { User } from '../src/users/entities/user.entity';
 import { Order } from '../src/orders/entities/order.entity';
@@ -16,5 +20,5 @@ export const SeedDataSource = new DataSource({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   entities: [User, Order],
-  synchronize: true,
+  synchronize: true, // solo para desarrollo
 });

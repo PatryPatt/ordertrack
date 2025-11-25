@@ -7,13 +7,22 @@ import { UsersModule } from './users/users.module';
 import { OrdersModule } from './orders/orders.module';
 import { HealthModule } from './health/health.module';
 import { DataSource } from 'typeorm';
-import { User } from './users/entities/user.entity';
+import * as Joi from 'joi';
 
 @Module({
   imports: [
     // Cargar variables de entorno globalmente
     ConfigModule.forRoot({
-      isGlobal: true, // disponible en toda la app
+      isGlobal: true, // hace que ConfigService esté disponible en toda la app
+      envFilePath: ['.env', '.env.local'], // archivos de configuración
+      // AQUI AÑADIMOS JOI
+      validationSchema: Joi.object({
+        POSTGRES_HOST: Joi.string().required(),
+        POSTGRES_PORT: Joi.number().default(5432),
+        POSTGRES_USER: Joi.string().required(),
+        POSTGRES_PASSWORD: Joi.string().required(),
+        POSTGRES_DB: Joi.string().required(),
+      }),
     }),
 
     // Configurar conexión a PostgreSQL con TypeORM

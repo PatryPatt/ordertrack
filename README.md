@@ -560,7 +560,40 @@ Por consola deberiamos ver:
 📘 Swagger Docs on http://localhost:4000/api/docs
 
 ## PostgreSQL
-Base de datos relacional
+Base de datos relacional utilizada por la aplicación.
+
+### Módulo DatabaseModule
+Se ha creado un módulo específico para gestionar la base de datos con los siguientes objetivos:
+
+1. Centralizar la conexión a PostgreSQL.
+2. Registrar y organizar todas las entidades en un único punto.
+3. Permitir el uso de TypeORM de forma global en toda la aplicación.
+4. Aplicar buenas prácticas de seguridad evitando exponer credenciales en el código y utilizando variables de entorno.
+
+La configuración utiliza ConfigService, lo que garantiza que todas las credenciales sensibles (host, usuario, contraseña, base de datos, etc.) se cargan desde el archivo .env.
+
+### Validación de variables con Joi
+Se añade la validación de entorno mediante Joi:
+npm install joi
+La aplicación valida automáticamente las variables definidas en .env durante el arranque:
+npm run start:dev
+Si falta alguna, se mostrará un error del tipo: Config validation error: "DB_HOST" is required
+Esto evita fallos de conexión y asegura configuraciones correctas desde el inicio.
+El seed también valida su propio .env.seed antes de conectarse.
+
+### Scripts de migración
+Se agregaron nuevos scripts en package.json:
+db:migrate: ejecuta todas las migraciones pendientes.
+db:reset: revierte la última migración y la ejecuta de nuevo (útil en desarrollo).
+
+En Resumen:
+La aplicación cuenta ahora con una arquitectura más robusta:
+- Conexión centralizada.
+- Variables de entorno seguras.
+- Validación automática con Joi.
+- Seed con validación propia.
+- Migraciones fácilmente gestionables.
+Todo ello siguiendo buenas prácticas de configuración y seguridad.
 
 ## pgAdmin 4
 Interfaz gráfica para PostgreSQL

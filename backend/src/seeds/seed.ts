@@ -11,7 +11,7 @@ async function runSeed() {
      // Limpiar Orders primero
     console.log('Deleting existing orders...');
     const orderRepo = SeedDataSource.getRepository(Order);
-    const deletedOrders = await orderRepo.createQueryBuilder().delete().execute();
+    const deletedOrders = await orderRepo.createQueryBuilder().delete().execute(); // se borra primero order
     console.log(`Deleted ${deletedOrders.affected || 0} orders.`);
 
     // Limpiar Users después
@@ -28,7 +28,7 @@ async function runSeed() {
     await userRepo.save(user);
     console.log('✅ User created:', user);
 
-    await SeedDataSource.destroy();
+    await SeedDataSource.destroy(); // se ejecuta siempre incluso en caso de error
     console.log('✅ Seed completed successfully.');
   } catch (error) {
     console.error('❌ Error running seed:', error);
