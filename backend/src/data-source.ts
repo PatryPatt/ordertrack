@@ -2,9 +2,9 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { User } from './users/entities/user.entity';
 import { Order } from './orders/entities/order.entity';
-import * as dotenv from 'dotenv';
+//import * as dotenv from 'dotenv';
 
-dotenv.config();
+//dotenv.config();
 
 export const AppDataSource = new DataSource({
   type: 'postgres',

@@ -7,7 +7,13 @@ import { UsersModule } from './users/users.module';
 import { OrdersModule } from './orders/orders.module';
 import { HealthModule } from './health/health.module';
 import { DataSource } from 'typeorm';
+import { MongoModule } from './mongo/mongo.module';
+import { EventsModule } from './mongo/events/events.module';
 import * as Joi from 'joi';
+import { TestModule } from './mongo/test/test.module';
+
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { ActivityInterceptor } from './common/interceptors/activity.interceptor';
 
 @Module({
   imports: [
@@ -22,6 +28,13 @@ import * as Joi from 'joi';
         POSTGRES_USER: Joi.string().required(),
         POSTGRES_PASSWORD: Joi.string().required(),
         POSTGRES_DB: Joi.string().required(),
+        // Validación MongoDB
+        MONGO_HOST: Joi.string().default('localhost'),
+        MONGO_PORT: Joi.number().default(27017),
+        MONGO_USER: Joi.string().optional(),
+        MONGO_PASSWORD: Joi.string().optional(),
+        MONGO_DB: Joi.string().default('app_mongo_db'),
+        MONGO_AUTH_SOURCE: Joi.string().default('admin'),
       }),
     }),
 
@@ -46,9 +59,19 @@ import * as Joi from 'joi';
     UsersModule,
     OrdersModule,
     HealthModule,
+    MongoModule,
+    EventsModule,
+    TestModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // AÑADO → Registro del interceptor global
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ActivityInterceptor,
+    },
+  ],
 })
 export class AppModule implements OnModuleInit {
   constructor(private dataSource: DataSource) {}

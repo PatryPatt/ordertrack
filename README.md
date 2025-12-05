@@ -600,6 +600,63 @@ Interfaz gráfica para PostgreSQL
 
 ## MongoDB
 Base de datos NoSQL
+Usaremos:
+  mongoose 8.x
+  @nestjs/mongoose 11.x
+
+Instalamos:
+  npm install mongoose@8 @nestjs/mongoose@11
+
+Verificamos que Mongoose funciona mediante un esquema de prueba, test.
+backend/src/mongo/
+  ├── mongo.module.ts
+  ├── schemas/
+  │     └── test.schema.ts
+  └── test/
+        ├── test.module.ts
+        ├── test.service.ts
+        └── test.controller.ts   (opcional para probar vía HTTP)
+
+Probamos desde Thunder Client::
+
+POST → http://localhost:4000/test
+GET → http://localhost:4000/test
+
+Veríamos los documentos insertados en MongoDB.
+
+### Módulo events con esquema dinámico
+
+backend/src/mongo/events/
+  ├─ events.module.ts
+  ├─ events.service.ts
+
+backend/src/mongo/schemas/
+  ├─ event.schema.ts
+  └─ test.schema.ts
+
+backend/src/mongo/test/
+  ├─ test.controller.ts
+  ├─ test.module.ts
+  └─ test.service.ts
+
+Como ver que guardarmos logs o actividad de usuario en MongoDB.
+
+1. Levantar tu NestJS en Docker:
+   docker compose up --build
+
+2. Lanzar un POST de prueba:
+   curl -X POST http://localhost:4000/events/test
+
+3. Entrar en Mongo:
+   docker exec -it mongo mongosh -u root -p root123 --authenticationDatabase admin
+   use app_mongo_db
+   db.events.find().sort({ createdAt: -1 }).pretty()
+
+El sistema de persistencia MongoDB:
+- Guarda eventos manuales.
+- Guarda actividad de usuario.
+- Los timestamps createdAt y updatedAt se generan correctamente.
+- La colección events se está ordenando como corresponde.
 
 ## Mongo Express
 Interfaz gráfica para MongoDB
