@@ -1,5 +1,19 @@
 import { Module, Global } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+
+@Global()
+@Module({
+  imports: [
+    MongooseModule.forRoot(
+      process.env.MONGO_URI || 'mongodb://localhost:27017/app_mongo_db',
+    ),
+  ],
+  exports: [MongooseModule],
+})
+export class MongoModule {}
+
+/*import { Module, Global } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Global()
@@ -31,4 +45,4 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
   ],
   exports: [MongooseModule],
 })
-export class MongoModule {}
+export class MongoModule {}*/

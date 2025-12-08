@@ -6,12 +6,16 @@
   "scripts": {
     "lint": "eslint --config .eslintrc.cjs . --ext .js,.jsx",
     "format": "prettier --write .",
-    "prepare": "husky"
+    "prepare": "husky install"
   },
   "lint-staged": {
-    "*.{js,jsx,json}": [
+    "backend/src/**/*.{ts,js,json}": [
       "eslint --fix",
-      "prettier --write"
+      "prettier --write --ignore-unknown"
+    ],
+    "backend/test/**/*.{ts,js,json}": [
+      "eslint --fix",
+      "prettier --write --ignore-unknown"
     ]
   },
   "husky": {

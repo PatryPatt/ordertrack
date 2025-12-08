@@ -194,10 +194,10 @@ src/
 
 ## Endpoints principales
 
-| Ruta | Método | Descripción |
-|------|---------|-------------|
-| `/` | GET | Endpoint base (“Hello World”) |
-| `/api/health` | GET | Verifica el estado del backend |
+| Ruta | Método   | Descripción |
+|------|----------|-------------|
+| `/`             | GET | Endpoint base (“Hello World”) |
+| `/api/health`   | GET | Verifica el estado del backend |
 | `/api/docs` | — | Documentación Swagger de la API |
 | `/users` | CRUD | Endpoints del módulo de usuarios |
 
@@ -599,7 +599,53 @@ Todo ello siguiendo buenas prácticas de configuración y seguridad.
 Interfaz gráfica para PostgreSQL
 
 ## MongoDB
-Base de datos NoSQL
+La aplicación usa MongoDB como base de datos NoSQL y Mongoose como ORM para NestJS.
+
+---
+
+### Conexión a MongoDB con Mongoose
+Se configura usando la variable de entorno:
+
+La aplicación se conecta mediante Mongoose usando la variable MONGO_URI.
+.env
+MONGO_URI=mongodb://root:root123@mongo:27017/app_mongo_db?authSource=admin
+
+- root:root123 → usuario y contraseña de MongoDB
+- mongo → host del contenedor
+- 27017 → puerto
+- app_mongo_db → nombre de la base de datos
+- authSource=admin → base de datos de autenticación
+
+La aplicación NestJS se conecta a MongoDB usando Mongoose. 
+
+#### Como verificar los datos en MongoDB
+Levantar aplicación:
+  docker compose up --build
+
+Insertar un evento de prueba:
+  curl -X POST http://localhost:4000/events/test
+
+Conectarse a MongoDB:
+  docker exec -it mongo mongosh -u root -p root123 --authenticationDatabase admin
+
+Consultar los eventos:
+  use app_mongo_db
+  db.events.find().sort({ createdAt: -1 }).pretty()
+
+#### Usando thunder Client
+POST (crear evento)
+  Método: POST
+  URL: http://localhost:4000/events
+  Body: vacío (o {})
+
+GET (listar eventos)
+  Método: GET
+  URL: http://localhost:4000/events
+
+GET (listar evento concreto)
+  Método: GET
+  URL: http://localhost:4000/events/:id
+
 Usaremos:
   mongoose 8.x
   @nestjs/mongoose 11.x
@@ -625,9 +671,12 @@ GET → http://localhost:4000/test
 Veríamos los documentos insertados en MongoDB.
 
 ### Módulo events con esquema dinámico
+Este módulo implementa un sistema de almacenamiento de eventos y actividad del usuario utilizando NestJS + Mongoose.
+Incluye esquema dinámico, servicios, controladores y endpoints verificados en Swagger.
 
 backend/src/mongo/events/
   ├─ events.module.ts
+  ├─ events.controller.ts
   ├─ events.service.ts
 
 backend/src/mongo/schemas/
@@ -657,6 +706,18 @@ El sistema de persistencia MongoDB:
 - Guarda actividad de usuario.
 - Los timestamps createdAt y updatedAt se generan correctamente.
 - La colección events se está ordenando como corresponde.
+
+### Swagger — Documentación de la API
+http://localhost:4000/api/docs
+
+Rutas documentadas:
+- POST /events → Crear evento
+- GET /events → Listar todos los eventos
+- GET /events/:id → Obtener detalle de un evento
+- POST /events/test → Crear evento de test
+- POST /events/manual-test → Crear evento manual
+
+Todas las rutas están accesibles, probables y correctamente agrupadas bajo el tag Events en Swagger UI.
 
 ## Mongo Express
 Interfaz gráfica para MongoDB

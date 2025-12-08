@@ -21,6 +21,10 @@ export class EventsService {
       .lean()
       .exec();
   }
+
+  async findById(id: string) {
+    return this.eventModel.findById(id).lean().exec();
+  }
   // TEST MANUAL
   async createTestEvent() {
     return this.eventModel.create({
