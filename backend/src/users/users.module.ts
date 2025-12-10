@@ -4,9 +4,13 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { User } from './entities/user.entity';
 import { UserRepository } from './repositories/user.repository';
+import { EventsModule } from '../mongo/events/events.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, UserRepository])], // <--- registramos la entidad User y el repositorio
+  imports: [
+    TypeOrmModule.forFeature([User, UserRepository]), // <--- registramos la entidad User y el repositorio
+    EventsModule, // necesario para inyectar EventsService
+  ],
   controllers: [UsersController],
   providers: [UsersService, UserRepository], // <--- registramos el repositorio
   exports: [UsersService, UserRepository], // <--- registramos el repositorio

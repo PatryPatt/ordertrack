@@ -14,6 +14,7 @@ export class OrdersService {
     private readonly ordersRepository: OrderRepository,
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    private readonly eventsService: EventsService, // inyectamos Mongo Events
   ) {}
 
   async create(createOrderDto: CreateOrderDto): Promise<Order> {
@@ -29,7 +30,17 @@ export class OrdersService {
       description: createOrderDto.description,
       user,
     });
-    return this.ordersRepository.save(order);
+
+    const newOrder = await this.ordersRepository.save(order);
+
+    // Evento creado en MongoDB
+    await this.eventsService.create('ORDER_CREATED', {
+      orderId: newOrder.id,
+      userId: user.id,
+      description: newOrder.description,
+    });
+
+    return newOrder;
   }
 
   findAll(): Promise<Order[]> {
@@ -64,11 +75,24 @@ export class OrdersService {
       order.description = updateOrderDto.description;
     }
 
-    return this.ordersRepository.save(order);
+    const updatedOrder = await this.ordersRepository.save(order);
+
+    // Evento de actualización
+    await this.eventsService.create('ORDER_UPDATED', {
+      orderId: updatedOrder.id,
+      userId: updatedOrder.user.id,
+    });
+
+    return updatedOrder;
   }
 
   async remove(id: number): Promise<void> {
     const order = await this.findOne(id);
     await this.ordersRepository.remove(order);
+
+    // Evento de eliminación
+    await this.eventsService.create('ORDER_DELETED', {
+      orderId: id,
+    });
   }
 }

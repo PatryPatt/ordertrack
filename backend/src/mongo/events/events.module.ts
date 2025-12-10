@@ -7,7 +7,7 @@ import { EventsController } from './events.controller';
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: 'Event', schema: EventSchema }, // No usar Event.name
+      { name: Event.name, schema: EventSchema }, // No usar Event.name
     ]),
   ],
   providers: [EventsService],

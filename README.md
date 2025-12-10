@@ -599,16 +599,22 @@ Todo ello siguiendo buenas prácticas de configuración y seguridad.
 Interfaz gráfica para PostgreSQL
 
 ## MongoDB
-La aplicación usa MongoDB como base de datos NoSQL y Mongoose como ORM para NestJS.
-
----
-
 ### Conexión a MongoDB con Mongoose
-Se configura usando la variable de entorno:
+Antes de iniciar la aplicación, debes tener una instancia de MongoDB disponible.
 
-La aplicación se conecta mediante Mongoose usando la variable MONGO_URI.
-.env
-MONGO_URI=mongodb://root:root123@mongo:27017/app_mongo_db?authSource=admin
+Configura la variable de entorno correspondiente en tu .env:
+  MONGO_URI=mongodb://root:root123@mongo:27017/app_mongo_db?authSource=admin
+Dentro del proyecto, Mongoose se inicializa automáticamente al arrancar la aplicación:
+  npm run start:dev
+
+Cuando la aplicación esté en ejecución, se puede acceder a Mongo:
+  mongosh
+  use app_mongo_db
+  show collections
+  db.events.find().pretty()
+
+La colección utilizada para almacenar los eventos es:
+  events
 
 - root:root123 → usuario y contraseña de MongoDB
 - mongo → host del contenedor
@@ -618,7 +624,7 @@ MONGO_URI=mongodb://root:root123@mongo:27017/app_mongo_db?authSource=admin
 
 La aplicación NestJS se conecta a MongoDB usando Mongoose. 
 
-#### Como verificar los datos en MongoDB
+#### Cómo verificar los datos en MongoDB
 Levantar aplicación:
   docker compose up --build
 
@@ -670,54 +676,159 @@ GET → http://localhost:4000/test
 
 Veríamos los documentos insertados en MongoDB.
 
-### Módulo events con esquema dinámico
-Este módulo implementa un sistema de almacenamiento de eventos y actividad del usuario utilizando NestJS + Mongoose.
-Incluye esquema dinámico, servicios, controladores y endpoints verificados en Swagger.
+### Cómo probar el módulo test
+El módulo test sirve únicamente para validar que Mongoose opera correctamente.
+Crear un documento de prueba:
+  POST http://localhost:4000/test
 
-backend/src/mongo/events/
-  ├─ events.module.ts
-  ├─ events.controller.ts
-  ├─ events.service.ts
+El endpoint inserta un documento estático en MongoDB para confirmar que:
+  La conexión está activa.
+  El modelo se crea correctamente.
+  La escritura en Mongo funciona.
 
-backend/src/mongo/schemas/
-  ├─ event.schema.ts
-  └─ test.schema.ts
+Se puede verificar:
+  db.testmodels.find().pretty()
 
-backend/src/mongo/test/
-  ├─ test.controller.ts
-  ├─ test.module.ts
-  └─ test.service.ts
+### Cómo probar el módulo events
+El EventsModule es el encargado de insertar eventos en MongoDB desde distintos módulos (Users, Orders, etc.).
 
-Como ver que guardarmos logs o actividad de usuario en MongoDB.
+Endpoints disponibles
+1. Crear evento de prueba
+   POST http://localhost:4000/events/test
+
+2. Crear un evento manual
+   POST http://localhost:4000/events/manual-test
+      Content-Type: application/json
+
+      {
+        "type": "MANUAL_EVENT",
+        "payload": { "foo": "bar" }
+      }
+
+Permite probar la inserción libre de eventos, enviando tipo y payload.
+
+3. Crear evento mediante DTO (si se utiliza)
+   POST http://localhost:4000/events
+    Content-Type: application/json
+
+    {
+      "type": "ANY_TYPE",
+      "payload": { ... }
+    }
+
+Requiere un DTO. Solo usar si está habilitado en el controlador.
+
+#### Cómo verificar que almacenamos logs o actividad de usuario en MongoDB.
 
 1. Levantar tu NestJS en Docker:
    docker compose up --build
-
 2. Lanzar un POST de prueba:
    curl -X POST http://localhost:4000/events/test
-
 3. Entrar en Mongo:
    docker exec -it mongo mongosh -u root -p root123 --authenticationDatabase admin
+4. Seleccionar BBDD
    use app_mongo_db
+5. Revisamos acciones realizadas en MongoDB
    db.events.find().sort({ createdAt: -1 }).pretty()
+6. Buscamos eventos recientes
+   db.events.find().sort({createdAt: -1}).limit(3).pretty()
 
 El sistema de persistencia MongoDB:
 - Guarda eventos manuales.
 - Guarda actividad de usuario.
 - Los timestamps createdAt y updatedAt se generan correctamente.
 - La colección events se está ordenando como corresponde.
+  
+### Cómo validar integración Postgres → Mongo
+El sistema genera automáticamente eventos cuando se realizan acciones en las entidades gestionadas mediante TypeORM (Postgres).
 
-### Swagger — Documentación de la API
-http://localhost:4000/api/docs
+Eventos generados automáticamente:
 
-Rutas documentadas:
+| Acción en Postgres | Evento en MongoDB |
+| ------------------ | ----------------- |
+| Crear usuario      | USER_CREATED      |
+| Eliminar usuario   | USER_DELETED      |
+| Crear pedido       | ORDER_CREATED     |
+| Actualizar pedido  | ORDER_UPDATED     |
+| Eliminar pedido    | ORDER_DELETED     |
+
+### Swagger docs
+Swagger está habilitado automáticamente cuando arranca la aplicación.
+
+Acceso:
+  http://localhost:4000/api/docs
+
+Incluye documentación de:
+- Users
+- Orders
+- Events
+- Test
+- Common DTOs
+  
+#### Dentro de Users y Orders, ejecuta:
+  POST /users
+  POST /orders
+  PATCH /users/:id
+  PATCH /orders/:id
+  DELETE /users/:id
+  DELETE /orders/:id
+
+#### Dentro de events, ejecuta:
 - POST /events → Crear evento
 - GET /events → Listar todos los eventos
 - GET /events/:id → Obtener detalle de un evento
 - POST /events/test → Crear evento de test
 - POST /events/manual-test → Crear evento manual
+  
+### Thunder Client
+#### Validar Users
+1. Crear un usuario (POSTGRES)
+Lanza un POST:
+  POST
+    http://localhost:4000/users
+  Body JSON:
+    {
+      "name": "hola",
+      "email": "hola@email.com"
+    }
+2. Update usuario (POSTGRES)
+  PATCH
+    http://localhost:4000/users/1
+  Body JSON
+    {"email": "nuevo@email.com"}
+3. Delete usuario (POSTGRES)
+  DELETE
+    http://localhost:4000/users/1
+  En MongoDB se debe registrar:
+    {
+      type: "USER_DELETED",
+      payload: { userId: 1 }
+    }
 
-Todas las rutas están accesibles, probables y correctamente agrupadas bajo el tag Events en Swagger UI.
+#### Validar Orders
+1. Crear una orden (POSTGRES)
+Lanza un POST:
+  POST
+    http://localhost:4000/orders
+  Body JSON:
+    {
+      "description": "Pedido prueba",
+      "userId": 1
+    }
+2. Update orden (POSTGRES)
+  PATCH
+    http://localhost:4000/orders/1
+  Body JSON
+    { "description": "pedido prueba" }
+3. Delete orden (POSTGRES)
+  DELETE
+    http://localhost:4000/orders/1
+  En MongoDB se debe registrar:
+    {
+      type: "ORDER_DELETED",
+      payload: { orderId: 1 }
+    }
+
 
 ## Mongo Express
 Interfaz gráfica para MongoDB
