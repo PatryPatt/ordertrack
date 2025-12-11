@@ -5,14 +5,20 @@ import {
   Param,
   Body,
   BadRequestException,
+  Query,
 } from '@nestjs/common';
+import { ApiQuery, ApiTags } from '@nestjs/swagger';
 import { EventsService } from './events.service';
+import { EventsQueryDto } from './dtos/events-query.dto';
 
+@ApiTags('events') //Agrupa todos los endpoints del controlador bajo el tag Events en Swagger UI.
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
-  // POST /events → crear evento (validando payload no vacío)
+  /**
+   * POST /events → Crear evento validando campos obligatorios
+   */
   @Post()
   async createEvent(
     @Body()
@@ -33,7 +39,9 @@ export class EventsController {
     return this.eventsService.create(body.type, body.payload, body.source);
   }
 
-  // GET /events/:id → obtener evento por ID
+  /**
+   * GET /events/:id → Obtener evento por ID
+   */
   @Get(':id')
   async getEventById(@Param('id') id: string) {
     const event = await this.eventsService.findById(id);
@@ -45,11 +53,47 @@ export class EventsController {
     return event;
   }
 
-  // GET /events → mantener el listado existente
+  /**
+   * GET /events → Búsqueda dinámica con filtros opcionales
+   * Documentado para Swagger con @ApiQuery
+   * name: nombre del query param.
+   * required: false: opcional.
+   * description: descripción visible en Swagger.
+   */
   @Get()
-  findAll() {
-    return this.eventsService.findAll();
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    description: 'Tipo de evento a filtrar',
+  })
+  @ApiQuery({
+    name: 'userId',
+    required: false,
+    description: 'User ID dentro del payload',
+  })
+  @ApiQuery({
+    name: 'source',
+    required: false,
+    description: 'Origen del evento',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Cantidad de registros (ej: 20)',
+  })
+  @ApiQuery({
+    name: 'skip',
+    required: false,
+    description: 'Offset de paginación (ej: 40)',
+  })
+  // Agrega aquí más filtros opcionales si quieres que Swagger los documente
+  async findDynamic(@Query() query: EventsQueryDto) {
+    return this.eventsService.findDynamic(query);
   }
+
+  /**
+   * Utilidades de test manual
+   */
   @Post('test')
   createTest() {
     return this.eventsService.create(

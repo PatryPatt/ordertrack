@@ -116,6 +116,12 @@ git commit -m "feat(setup): descripcion"
 #### subir cambios al repositorio remoto
 git push origin feature/<nombre-rama>
 
+#### Se puede validar (commitlint) antes de commitear :
+Ejecutamos:
+  npx commitlint --from HEAD~1 --to HEAD
+O si queremos validar un mensaje específico:
+  echo "feat(setup): uso de PostgreSQL y MongoDB" | npx commitlint
+
 ---
 
 ## Tecnologías utilizadas
@@ -829,6 +835,213 @@ Lanza un POST:
       payload: { orderId: 1 }
     }
 
+### Endpoints dinámicos de eventos
+1. Nuevo endpoint dinámico de consultas.
+
+Se implementa un endpoint flexible para consultar eventos:
+  GET /events?type=ORDER_CREATED&userId=123&limit=20&skip=10
+
+Permite filtrar por:
+   - type (campo directo del evento)
+   - userId (ubicado dentro del payload)
+   - source
+   - cualquier otro campo dinámico presente en payload
+   - parámetros de paginación limit y skip
+
+### Uso desde Swagger
+El endpoint está documentado en Swagger y permite probar los filtros directamente desde la interfaz gráfica.
+
+1. Accede a Swagger:
+  http://localhost:3000/api
+2. Selecciona Events en el panel izquierdo.
+3. Abre la operación GET /events.
+4. Introduce los filtros opcionales:
+  type → Ej.: ORDER_CREATED
+  userId → Ej.: 123
+5. Ejecuta la petición para ver los resultados filtrados.
+
+### Pruebas desde Thunder Client
+También es posible probar el endpoint desde Thunder Client (VS Code).
+
+1. Crear una nueva petición GET.
+2. URL:
+  http://localhost:3000/events
+
+3. Añadir los parámetros opcionales en la pestaña Params:
+| Key    | Value         |
+| ------ | ------------- |
+| type   | ORDER_CREATED |
+| userId | 123           |
+
+4. Enviar la petición.
+5. Revisar la respuesta JSON con los eventos filtrados.
+  Ejemplo de URL completa:
+    http://localhost:3000/events?type=ORDER_CREATED&userId=123
+
+### Módulo de Eventos (MongoDB)
+Implementamos un sistema de registro de eventos en MongoDB que nos permite ejecutar consultas dinámicas sobre ellos.
+
+- Creación de eventos desde cualquier módulo del sistema.
+- Consulta general (findAll)
+- Consulta por id (findById)
+- Búsqueda dinámica por:
+  type
+  userId (dentro del payload)
+  cualquier otra clave incluida en payload.
+- Endpoints completamente documentados con Swagger.
+- Ejemplos de prueba desde Thunder Client.
+
+#### Endpoints disponibles
+
+| Método | Ruta                | Descripción                                   |
+| ------ | ------------------- | --------------------------------------------- |
+| POST   | /events             | Crear un evento                               |
+| GET    | /events             | Listar eventos dinámicamente mediante filtros |
+| GET    | /events/:id         | Obtener evento por su ID                      |
+| POST   | /events/test        | Crear un evento de prueba                     |
+| POST   | /events/manual-test | Crear evento de prueba manual                 |
+
+#### Consultas dinámicas
+El endpoint:
+  GET /events
+
+Acepta filtros opcionales:
+Parámetros disponibles
+
+| Query param    | Tipo   | Dónde filtra                  |
+| -------------- | ------ | ----------------------------- |
+| type           | string | Campo directo                 |
+| userId         | string | payload.userId                |
+| source         | string | payload.source o field suelto |
+| cualquier otro | string | payload.<campo>               |
+
+Ejemplos:
+
+Obtener eventos ORDER_CREATED:
+  GET /events?type=ORDER_CREATED
+
+Obtener eventos relacionados con un usuario:
+  GET /events?userId=123
+
+Consulta combinada:
+  GET /events?type=ORDER_UPDATED&userId=99
+
+Buscar por más campos dentro del payload:
+  GET /events?country=ES&device=mobile
+
+#### Swagger
+Swagger está disponible en:
+  http://localhost:4000/api
+  
+En este endpoint pueden probarse dinámicamente:
+  GET /events con los filtros opcionales ya documentados
+  POST /events enviando body JSON
+  Rutas de test
+
+Los decoradores utilizados son:
+  @ApiQuery({ name: 'type', required: false })
+  @ApiQuery({ name: 'userId', required: false })
+  @ApiQuery({ name: 'source', required: false })
+
+#### Thunder Client
+Crear un evento:
+
+POST /events
+Body:
+  {
+    "type": "USER_CREATED",
+    "payload": {
+      "userId": 1,
+      "email": "demo@test.com"
+    },
+    "source": "api"
+  }
+
+Filtrar eventos:
+  GET /events?type=USER_CREATED
+  GET /events?userId=1
+  GET /events?type=USER_CREATED&userId=1
+
+- Estructura general del documento Event
+Ejemplo de documento almacenado en MongoDB:
+    {
+      "_id": "675ac6c0df8a9f0012a4ff92",
+      "type": "USER_CREATED",
+      "payload": {
+        "userId": 1,
+        "email": "demo@test.com"
+      },
+      "source": "api",
+      "createdAt": "2025-01-20T10:33:02.123Z"
+    }
+
+#### Paginación en eventos (limit / skip)
+El endpoint permite paginar resultados usando:
+  limit: número máximo de eventos a devolver.
+  skip: número de eventos a saltar (offset).
+Ambos parámetros se validan mediante DTO.
+
+Ejemplos:
+
+Obtener primeros 20 eventos:
+  GET /events?limit=20
+
+Obtener eventos de la “segunda página”:
+  GET /events?skip=20&limit=20
+
+Con filtros combinados:
+  GET /events?type=ORDER_CREATED&userId=99&limit=10&skip=10
+
+3. Validación mediante EventsQueryDto
+Se introduce un DTO que valida:
+  limit y skip deben ser numéricos (strings numéricos permitidos)
+  El resto de filtros son opcionales y de tipo string
+  Permite consultas sin parámetros
+
+Esto garantiza que el servicio solo procesa consultas válidas.
+
+4. Refactor del servicio findDynamic()
+Se incorpora:
+- Construcción automática de filtros dinámicos sobre payload.<campo>
+- Filtros específicos para type y payload.userId
+- Integración completa con limit y skip
+- Ordenación por fecha de creación (descendente)
+
+5. Documentación en Swagger
+En Swagger UI aparecerán los parámetros:
+  @ApiQuery({ name: 'type' })
+  @ApiQuery({ name: 'userId' })
+  @ApiQuery({ name: 'source' })
+  @ApiQuery({ name: 'limit' })
+  @ApiQuery({ name: 'skip' })
+
+Swagger generará automáticamente la documentación y permitirá probarlo.
+
+6. Tests unitarios
+Se añaden pruebas completas para:
+
+Service
+  Aplicación correcta de limit y skip
+  Valores por defecto
+  Mapeo de filtros dinámicos al payload
+  Filtros directos (type, userId)
+
+DTO
+  Validación de números y strings no numéricos
+  DTO vacío permitido
+  Campos opcionales correctamente validados
+
+Controller
+  Delegación correcta de parámetros al servicio
+  Creación de eventos
+  Consulta por ID
+
+#### Como probar
+Thunder Client
+  GET http://localhost:4000/events?type=USER_CREATED&limit=10&skip=20
+
+Swagger
+  http://localhost:4000/api
 
 ## Mongo Express
 Interfaz gráfica para MongoDB
