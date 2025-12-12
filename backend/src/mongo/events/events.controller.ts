@@ -7,9 +7,10 @@ import {
   BadRequestException,
   Query,
 } from '@nestjs/common';
-import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiQuery, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 import { EventsQueryDto } from './dtos/events-query.dto';
+import { CreateEventDto } from './dtos/create-event.dto';
 
 @ApiTags('events') //Agrupa todos los endpoints del controlador bajo el tag Events en Swagger UI.
 @Controller('events')
@@ -19,29 +20,19 @@ export class EventsController {
   /**
    * POST /events → Crear evento validando campos obligatorios
    */
+  @ApiOperation({ summary: 'Registrar nuevo evento' })
   @Post()
   async createEvent(
     @Body()
-    body: {
-      type?: string;
-      payload?: any;
-      source?: string;
-    },
+    body: CreateEventDto,
   ) {
-    if (!body.type) {
-      throw new BadRequestException('El campo "type" es obligatorio');
-    }
-
-    if (!body.payload || Object.keys(body.payload).length === 0) {
-      throw new BadRequestException('El campo "payload" no puede estar vacío');
-    }
-
     return this.eventsService.create(body.type, body.payload, body.source);
   }
 
   /**
    * GET /events/:id → Obtener evento por ID
    */
+  @ApiOperation({ summary: 'Consulta dinámica de eventos' })
   @Get(':id')
   async getEventById(@Param('id') id: string) {
     const event = await this.eventsService.findById(id);

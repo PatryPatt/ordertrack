@@ -20,7 +20,6 @@ async function bootstrap() {
     .setTitle('OrderTrack API')
     .setDescription('Documentación de la API con NestJS + Swagger')
     .setVersion('1.0')
-    .addTag('users')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

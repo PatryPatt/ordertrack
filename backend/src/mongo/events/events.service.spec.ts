@@ -1,27 +1,30 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { EventsService } from './events.service';
+import { Event } from '../schemas/event.schema';
 
-describe('EventsService - findDynamic', () => {
+describe('EventsService ', () => {
   let service: EventsService;
-  let eventModelMock: any;
-
+  let modelMock: any;
   beforeEach(async () => {
-    eventModelMock = {
+    // Mock completo del modelo de Mongoose
+    modelMock = {
+      create: jest.fn(),
       find: jest.fn().mockReturnThis(),
       sort: jest.fn().mockReturnThis(),
-      skip: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
       lean: jest.fn().mockReturnThis(),
       exec: jest.fn().mockResolvedValue([]),
+      findById: jest.fn().mockReturnThis(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EventsService,
         {
-          provide: getModelToken('Event'),
-          useValue: eventModelMock,
+          provide: getModelToken(Event.name),
+          useValue: modelMock,
         },
       ],
     }).compile();
@@ -34,15 +37,15 @@ describe('EventsService - findDynamic', () => {
 
     await service.findDynamic(query);
 
-    expect(eventModelMock.skip).toHaveBeenCalledWith(10);
-    expect(eventModelMock.limit).toHaveBeenCalledWith(20);
+    expect(modelMock.skip).toHaveBeenCalledWith(10);
+    expect(modelMock.limit).toHaveBeenCalledWith(20);
   });
 
   it('Debe aplicar valores por defecto cuando no se manda limit/skip', async () => {
     await service.findDynamic({});
 
-    expect(eventModelMock.skip).toHaveBeenCalledWith(0);
-    expect(eventModelMock.limit).toHaveBeenCalledWith(50);
+    expect(modelMock.skip).toHaveBeenCalledWith(0);
+    expect(modelMock.limit).toHaveBeenCalledWith(50);
   });
 
   it('Debe construir correctamente el filtro con type y userId', async () => {
@@ -50,7 +53,7 @@ describe('EventsService - findDynamic', () => {
 
     await service.findDynamic(query);
 
-    expect(eventModelMock.find).toHaveBeenCalledWith({
+    expect(modelMock.find).toHaveBeenCalledWith({
       type: 'USER_CREATED',
       'payload.userId': '99',
     });
@@ -61,9 +64,24 @@ describe('EventsService - findDynamic', () => {
 
     await service.findDynamic(query);
 
-    expect(eventModelMock.find).toHaveBeenCalledWith({
+    expect(modelMock.find).toHaveBeenCalledWith({
       'payload.foo': 'bar',
       'payload.x': '10',
     });
+  });
+
+  it('Debe crear un evento', async () => {
+    modelMock.create.mockResolvedValue({ _id: '123', type: 'TEST' });
+
+    const event = await service.create('TEST', { data: 1 });
+
+    expect(modelMock.create).toHaveBeenCalledWith({
+      type: 'TEST',
+      payload: { data: 1 },
+      source: undefined,
+    });
+
+    expect(event).toHaveProperty('_id');
+    expect(event.type).toBe('TEST');
   });
 });

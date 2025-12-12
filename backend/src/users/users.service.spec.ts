@@ -1,14 +1,64 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { UserRepository } from './repositories/user.repository';
+import { EventsService } from '../mongo/events/events.service';
 import { NotFoundException } from '@nestjs/common';
+
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 describe('UsersService', () => {
   let service: UsersService;
+  let repoMock: any;
+  let eventsMock: any;
+
+  let db: any[] = [];
+  let idCounter = 1;
 
   beforeEach(async () => {
+    db = [];
+    idCounter = 1;
+
+    repoMock = {
+      findOne: jest.fn((opts) => {
+        return db.find((u) => u.email === opts.where.email) || null;
+      }),
+
+      findOneBy: jest.fn(({ id }) => {
+        return db.find((u) => u.id === id) || null;
+      }),
+
+      find: jest.fn(() => db),
+
+      create: jest.fn((dto) => ({ id: idCounter++, ...dto })),
+
+      save: jest.fn((entity) => {
+        const idx = db.findIndex((u) => u.id === entity.id);
+
+        if (idx >= 0) {
+          db[idx] = entity;
+        } else {
+          db.push(entity);
+        }
+
+        return entity;
+      }),
+
+      remove: jest.fn((entity) => {
+        db = db.filter((u) => u.id !== entity.id);
+      }),
+    };
+
+    eventsMock = {
+      create: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [UsersService],
+      providers: [
+        UsersService,
+        { provide: UserRepository, useValue: repoMock },
+        { provide: EventsService, useValue: eventsMock },
+      ],
     }).compile();
 
     service = module.get<UsersService>(UsersService);
@@ -18,53 +68,61 @@ describe('UsersService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should create a user', () => {
+  it('should create a user', async () => {
     const dto: CreateUserDto = {
-      username: 'patricia',
+      name: 'patricia',
       email: 'patricia@example.com',
-      password: '123456',
     };
 
-    const user = service.create(dto);
-    expect(user).toMatchObject(dto);
-    expect(user.id).toBeDefined();
+    const user = await service.create(dto);
+    expect(user).toHaveProperty('id');
+    expect(user.name).toBe(dto.name);
+    expect(eventsMock.create).toHaveBeenCalled();
   });
 
-  it('should find a user by ID', () => {
-    const user = service.create({
-      username: 'user2',
+  it('should find a user by ID', async () => {
+    const dto: CreateUserDto = {
+      name: 'user2',
       email: 'user2@example.com',
-      password: 'abcdef',
-    });
+    };
 
-    const found = service.findOne(user.id);
-    expect(found).toEqual(user);
+    const created = await service.create(dto);
+    const found = await service.findOne(created.id);
+
+    expect(found.id).toBe(created.id);
   });
 
-  it('should throw NotFoundException if user not found', () => {
-    expect(() => service.findOne(999)).toThrow(NotFoundException);
+  it('should throw NotFoundException if user not found', async () => {
+    await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
   });
 
-  it('should update a user', () => {
-    const user = service.create({
-      username: 'oldname',
+  it('should update a user', async () => {
+    const dto: CreateUserDto = {
+      name: 'oldname',
       email: 'old@example.com',
-      password: '123456',
-    });
+    };
 
-    const updated = service.update(user.id, { username: 'newname' });
-    expect(updated.username).toBe('newname');
-    expect(service.findOne(user.id).username).toBe('newname');
+    const created = await service.create(dto);
+
+    const updateDto: UpdateUserDto = { name: 'newname' };
+    await service.update(created.id, updateDto);
+
+    const fetched = await service.findOne(created.id);
+    expect(fetched.name).toBe('newname');
   });
 
-  it('should remove a user', () => {
-    const user = service.create({
-      username: 'todelete',
+  it('should remove a user', async () => {
+    const dto: CreateUserDto = {
+      name: 'todelete',
       email: 'delete@example.com',
-      password: '123456',
-    });
+    };
 
-    service.remove(user.id);
-    expect(() => service.findOne(user.id)).toThrow(NotFoundException);
+    const created = await service.create(dto);
+
+    await service.remove(created.id);
+
+    await expect(service.findOne(created.id)).rejects.toThrow(
+      NotFoundException,
+    );
   });
 });

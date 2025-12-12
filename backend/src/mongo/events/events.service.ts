@@ -5,14 +5,12 @@ import { Event, EventDocument } from '../schemas/event.schema';
 
 @Injectable()
 export class EventsService {
-  constructor(
-    @InjectModel(Event.name) private eventModel: Model<EventDocument>,
-  ) {}
+  constructor(@InjectModel(Event.name) private eventModel: Model<Event>) {}
 
   /**
    * Crear un evento genérico
    */
-  async create(type: string, payload: Record<string, any>, source?: string) {
+  async create(type: string, payload: any, source?: string) {
     return this.eventModel.create({ type, payload, source });
   }
 
